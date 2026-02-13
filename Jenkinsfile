@@ -26,7 +26,7 @@ pipeline {
             parallel {
                 stage('NPM Dependency Audit') {
                     steps {
-                        // Ajout de "|| true" pour éviter que l'audit ne stoppe le build immédiatement
+                        // "|| true" permet au pipeline de continuer même si des failles sont trouvées
                         sh 'npm audit --audit-level=critical || true'
                     }
                 }
@@ -40,7 +40,7 @@ pipeline {
                             --data /var/lib/jenkins/owasp-db/data/ \
                             --prettyPrint''', odcInstallation: 'OWASP-DepCheck-12'
                         
-                        // ✅ CONFIGURATION VALIDÉE : Seuil critique uniquement
+                        // CORRECTION MAJEURE : Seuil critique uniquement
                         dependencyCheckPublisher failedTotalCritical: 1, pattern: 'dependency-check-report.xml', stopBuild: true
                         
                         publishHTML([allowMissing: true, alwaysLinkToLastBuild: true, keepAll: true, reportDir: './', reportFiles: 'dependency-check-jenkins.html', reportName: 'Dependency Check HTML Report', reportTitles: '', useWrapperFileDirectly: true])
@@ -59,7 +59,7 @@ pipeline {
                 retry(2)
             }
             steps {
-                // Cette étape échouera probablement (attendu pour la suite du lab)
+                // Cette étape échouera (c'est normal pour l'instant)
                 sh 'npm test'
                 junit allowEmptyResults: true, stdioRetention: '', testResults: 'test-results.xml'
             }
@@ -92,7 +92,7 @@ pipeline {
         }
         stage('Push Docker Image') {
             steps {
-                // J'ai remis l'URL correcte ici (elle était vide dans votre code)
+                // J'ai corrigé l'URL ici (elle était vide dans votre version précédente)
                 withDockerRegistry(credentialsId: 'docker-hub-credentials', url: "http://kodekloud-hub:5000") {
                     sh  'docker push kodekloud-hub:5000/solar-system:$GIT_COMMIT'
                 }
