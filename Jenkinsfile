@@ -26,8 +26,10 @@ pipeline {
             parallel {
                 stage('NPM Dependency Audit') {
                     steps {
-                        // Added '|| true' so this stage doesn't block the pipeline if it finds issues
-                        sh 'npm audit --audit-level=critical || true'
+                        sh '''
+                            npm audit --audit-level=critical
+                            echo $?
+                        '''
                     }
                 }
                 stage('OWASP Dependency Check') {
@@ -39,10 +41,7 @@ pipeline {
                             --disableYarnAudit \
                             --data /var/lib/jenkins/owasp-db/data/ \
                             --prettyPrint''', odcInstallation: 'OWASP-DepCheck-12'
-
-                        // FIX APPLIED HERE: Only fail on Critical vulnerabilities
                         dependencyCheckPublisher failedTotalCritical: 1, pattern: 'dependency-check-report.xml', stopBuild: true
-
                         publishHTML([allowMissing: true, alwaysLinkToLastBuild: true, keepAll: true, reportDir: './', reportFiles: 'dependency-check-jenkins.html', reportName: 'Dependency Check HTML Report', reportTitles: '', useWrapperFileDirectly: true])
                     }
                 }
@@ -91,7 +90,7 @@ pipeline {
         }
         stage('Push Docker Image') {
             steps {
-                withDockerRegistry(credentialsId: 'docker-hub-credentials', url: "http://kodekloud-hub:5000") {
+                withDockerRegistry(credentialsId: 'docker-hub-credentials', url: "") {
                     sh  'docker push kodekloud-hub:5000/solar-system:$GIT_COMMIT'
                 }
             }
