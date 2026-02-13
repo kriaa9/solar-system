@@ -26,7 +26,7 @@ pipeline {
             parallel {
                 stage('NPM Dependency Audit') {
                     steps {
-                        // Ajout de "|| true" pour ne pas bloquer le build ici
+                        // Le "|| true" permet d'ignorer les erreurs ici pour continuer
                         sh 'npm audit --audit-level=critical || true'
                     }
                 }
@@ -40,8 +40,7 @@ pipeline {
                             --data /var/lib/jenkins/owasp-db/data/ \
                             --prettyPrint''', odcInstallation: 'OWASP-DepCheck-12'
                         
-                        // CORRECTION ICI : Seuil critique uniquement (failedTotalCritical: 1)
-                        // Les seuils Low/Medium/High ont été retirés.
+                        // C'EST ICI LA CORRECTION : Seuil critique uniquement
                         dependencyCheckPublisher failedTotalCritical: 1, pattern: 'dependency-check-report.xml', stopBuild: true
                         
                         publishHTML([allowMissing: true, alwaysLinkToLastBuild: true, keepAll: true, reportDir: './', reportFiles: 'dependency-check-jenkins.html', reportName: 'Dependency Check HTML Report', reportTitles: '', useWrapperFileDirectly: true])
@@ -60,7 +59,6 @@ pipeline {
                 retry(2)
             }
             steps {
-                // Cette étape est prévue pour échouer lors de la prochaine tâche (5/6)
                 sh 'npm test'
                 junit allowEmptyResults: true, stdioRetention: '', testResults: 'test-results.xml'
             }
